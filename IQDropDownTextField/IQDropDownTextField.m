@@ -116,7 +116,12 @@
     labelText.font = [UIFont boldSystemFontOfSize:20.0];
     labelText.backgroundColor = [UIColor clearColor];
     [labelText setTextAlignment:NSTextAlignmentCenter];
-    [labelText setText:[_itemList objectAtIndex:row]];
+    id obj = [_itemList objectAtIndex:row];
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        [labelText setText:[(NSDictionary*)obj objectForKey:self.optsLabel]];
+    } else {
+        [labelText setText:obj];
+    }
     return labelText;
 }
 
@@ -133,9 +138,32 @@
     
     [self setSelectedItem:[dropDownTimeFormatter stringFromDate:tPicker.date]];
 }
+
 -(void)setItemList:(NSArray *)itemList
 {
-    _itemList = itemList;
+    _itemList = [itemList mutableCopy];
+    
+    if ([self.text length] == 0 && [_itemList count] > 0)
+    {
+        //        [self setText:[_itemList objectAtIndex:0]];
+    }
+    
+    [pickerView reloadAllComponents];
+}
+
+// Custom
+-(void)setItemListDictionary:(NSArray *)itemList optsKey:(NSString*)optsKey optsLabel:(NSString*)optsLabel optsSelecione:(BOOL)optsSelecione
+{
+    [self setDropDownMode:IQDropDownModeDictionaryPicker];
+    if(optsSelecione) {
+        _itemList = [[NSMutableArray alloc] init];
+        [_itemList addObject:@{optsKey:@"", optsLabel:@""}];
+        [_itemList addObjectsFromArray:itemList];
+    } else {
+        _itemList = [itemList mutableCopy];
+    }
+    _optsKey = optsKey;
+    _optsLabel = optsLabel;
     
     if ([self.text length] == 0 && [_itemList count] > 0)
     {
@@ -154,12 +182,41 @@
     [datePicker setLocale:dropDownDateFormatter.locale];
 }
 
+// Custom
+-(void)setSelectedItemDictionary:(NSString *)selectedItemStr
+{
+    for (NSDictionary *dict in _itemList) {
+        NSString *label = [dict objectForKey:_optsKey];
+        if([label isEqualToString:selectedItemStr]) {
+            _selectedItem = dict;
+            self.text = [dict objectForKey:_optsLabel];
+            [self insertText:[dict objectForKey:_optsLabel]];
+            [pickerView selectRow:[_itemList indexOfObject:dict] inComponent:0 animated:YES];
+        }
+    }
+}
 
--(void)setSelectedItem:(NSString *)selectedItem
+
+-(void)setSelectedItem:(NSObject *)selectedItemId
 {
     switch (_dropDownMode)
     {
+        // Custom
+        case IQDropDownModeDictionaryPicker:
+        {
+            NSString *selectedItem = [(NSDictionary*)selectedItemId objectForKey:self.optsLabel];
+            if ([_itemList containsObject:selectedItemId])
+            {
+                _selectedItem = selectedItemId;
+                self.text = @"";
+                [self insertText:selectedItem];
+                [pickerView selectRow:[_itemList indexOfObject:selectedItemId] inComponent:0 animated:YES];
+            }
+            break;
+        }
         case IQDropDownModeTextPicker:
+        {
+            NSString *selectedItem = [NSString stringWithFormat:@"%@", selectedItemId];
             if ([_itemList containsObject:selectedItem])
             {
                 _selectedItem = selectedItem;
@@ -168,9 +225,10 @@
                 [pickerView selectRow:[_itemList indexOfObject:selectedItem] inComponent:0 animated:YES];
             }
             break;
-            
+        }
         case IQDropDownModeDatePicker:
         {
+            NSString *selectedItem = [NSString stringWithFormat:@"%@", selectedItemId];
             NSDate *date = [dropDownDateFormatter dateFromString:selectedItem];
             if (date)
             {
@@ -187,7 +245,7 @@
         }
         case IQDropDownModeTimePicker:
         {
-            
+            NSString *selectedItem = [NSString stringWithFormat:@"%@", selectedItemId];
             NSDate *date = [dropDownTimeFormatter dateFromString:selectedItem];
             if (date)
             {
@@ -237,6 +295,15 @@
 {
     if (_dropDownMode == IQDropDownModeDatePicker)
         datePicker.maximumDate = date;
+}
+
+// Custom
+- (NSString*)textKey
+{
+    if (_selectedItem == nil) {
+        return @"";
+    }
+    return [(NSDictionary*)_selectedItem objectForKey:self.optsKey];
 }
 
 @end
