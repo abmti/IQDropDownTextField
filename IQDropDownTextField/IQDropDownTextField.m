@@ -186,7 +186,7 @@
 -(void)setSelectedItemDictionary:(NSString *)selectedItemStr
 {
     for (NSDictionary *dict in _itemList) {
-        NSString *label = [dict objectForKey:_optsKey];
+        NSString *label = [[dict objectForKey:_optsKey] stringValue];
         if([label isEqualToString:selectedItemStr]) {
             _selectedItem = dict;
             self.text = [dict objectForKey:_optsLabel];
