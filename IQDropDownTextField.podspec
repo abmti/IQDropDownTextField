@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "IQDropDownTextField"
-  s.version      = "1.0.0"
+  s.version      = "1.0.1"
   s.summary      = "TextField with DropDown support using UIPickerView"
   s.homepage     = "https://github.com/hackiftekhar/IQDropDownTextField"
   s.license      = 'MIT'
